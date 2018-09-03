@@ -24,6 +24,8 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -42,6 +44,32 @@ public class MainActivity extends AppCompatActivity {
 
     public void ExecuteFetch(View view)
     {
+        //Adding Escape Characters for URL
+        Map<Character,String> escapeChars = new HashMap<Character, String>();
+        escapeChars.put('$', "%24");
+        escapeChars.put('%', "%25");
+        escapeChars.put('&', "%26");
+        escapeChars.put('@', "%40");
+        escapeChars.put('`', "%60");
+        escapeChars.put('/', "%2F");
+        escapeChars.put(':', "%3A");
+        escapeChars.put(';', "%3B");
+        escapeChars.put('<', "%3C");
+        escapeChars.put('=', "%3D");
+        escapeChars.put('>', "%3E");
+        escapeChars.put('?', "%3F");
+        escapeChars.put('[', "%5B");
+        escapeChars.put(']', "%5D");
+        escapeChars.put('^', "%5E");
+        escapeChars.put('{', "%7B");
+        escapeChars.put('|', "%7C");
+        escapeChars.put('}', "%7D");
+        escapeChars.put('~', "%7E");
+        escapeChars.put('"', "%22");
+        escapeChars.put('\'', "%27");
+        escapeChars.put('+', "%2B");
+        escapeChars.put(',', "%2C");
+
         bt = (Button) findViewById(R.id.fetchButton);
         bt.setText("...");
         bt.setEnabled(false);
@@ -60,6 +88,14 @@ public class MainActivity extends AppCompatActivity {
         {
             //finalSearchString => The final refined name of the string to search
             String finalSearchString = "";
+            /*
+            COMPLETE THIS PART
+            WHAT HAPPENS WHEN THERE ARE BRACKETS () IN THE SEARCH CriteRia
+            */
+            String[] bracketSplitter = productName.split("\\(");
+            /*
+            COMPLETE THIS PART
+            */
             //To char Array
             char[] pN = productName.toCharArray();
             for(int i=0; i<productName.length(); i++)
@@ -68,6 +104,10 @@ public class MainActivity extends AppCompatActivity {
                 {
                     finalSearchString+='+';
                 }
+                else if(escapeChars.containsKey(pN[i]))
+                {
+                    finalSearchString+=escapeChars.get(pN[i]);
+                }
                 else
                 {
                     finalSearchString += pN[i];
@@ -75,6 +115,7 @@ public class MainActivity extends AppCompatActivity {
             }
             String urlToFetch = "https://www.amazon.in/s?url=search-alias%3Daps&field-keywords=" + finalSearchString;
             Toast.makeText(this, urlToFetch, Toast.LENGTH_LONG).show();
+            System.out.println(urlToFetch);
             new SearchProduct().execute(urlToFetch);
         }
     }
@@ -105,18 +146,22 @@ public class MainActivity extends AppCompatActivity {
                 String lala = buffer.toString();
                 Document document = Jsoup.parse(lala);
 
+                Element ele = document.select("span.a-size-base.a-color-price.a-text-bold").first();
+                System.out.println(document.toString());
+                return ele.html();
                 /*
-                //For price parse
-                Element eles = document.getElementsByClass("p13n-sc-price").first();
-                return eles.text();
+                try {
+                    Element eles = document.getElementsByClass("sx-table-item").first();
+                    Element ele = eles.getElementsByTag("a").first();
+                    return "https://www.amazon.in"+ele.attr("href");
+                }catch (Exception e) {
+                    System.out.println(document.toString());
+                    return "!!ERROR!!";
+                }
                 */
-
-                Element eles = document.getElementsByClass("sx-table-item").first();
-                Element ele = eles.getElementsByTag("a").first();
-                return "https://www.amazon.in"+ele.attr("href");
             }
 
-            //EXCEPTION HANDLING STARTS
+            //EXCEPTION HANDLING STARTS//
             catch (MalformedURLException e) {
                 e.printStackTrace();
             } catch (IOException e) {
@@ -131,7 +176,7 @@ public class MainActivity extends AppCompatActivity {
                     e.printStackTrace();
                 }
             }
-            //EXCEPTION HANDLING ENDS
+            //EXCEPTION HANDLING ENDS//
 
             //return NULL or a Message Error
             return "FETCH ERROR";
@@ -142,7 +187,16 @@ public class MainActivity extends AppCompatActivity {
             tv = (TextView) findViewById(R.id.tv);
             super.onPostExecute(s);
             System.out.println(s);
-            new FetchProductPrice().execute(s);
+            int klmnop=1;
+            if(klmnop==1)
+            {
+                bt.setEnabled(true);
+                bt.setText("Start Tracking");
+                tv.setText(s);
+            }
+            else {
+                new FetchProductPrice().execute(s);
+            }
         }
     }
 
