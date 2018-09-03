@@ -1,5 +1,7 @@
 package straightforwardapps.tellmewhenitchange;
 
+import android.content.Intent;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -32,12 +34,12 @@ public class MainActivity extends AppCompatActivity {
     TextView tv;
     Button bt;
     EditText prodName;
+    String latestURL = "";
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         tv = (TextView) findViewById(R.id.tv);
         bt = (Button) findViewById(R.id.fetchButton);
         prodName = (EditText) findViewById(R.id.prodName);
-
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
     }
@@ -75,27 +77,22 @@ public class MainActivity extends AppCompatActivity {
         bt.setEnabled(false);
         //productName => Stores the trimmed product name given
         prodName = (EditText) findViewById(R.id.prodName);
+        //prodName.setText("Generic Digital Heavy Duty Portable Hook Type with Temp Weighing Scale, 50 Kg,Multicolor");
         String productName = prodName.getText().toString().trim();
 
-        //Checks whether the field is empty or not
+        //Checks whether the field is empty or not //a-section a-spacing-micro
         if(productName.equals(""))
         {
             Toast.makeText(this, "Give the product name!", Toast.LENGTH_LONG).show();
             bt.setText("Start Fetching");
             bt.setEnabled(true);
+            prodName.setText("");
         }
         else
         {
             //finalSearchString => The final refined name of the string to search
             String finalSearchString = "";
-            /*
-            COMPLETE THIS PART
-            WHAT HAPPENS WHEN THERE ARE BRACKETS () IN THE SEARCH CriteRia
-            */
-            String[] bracketSplitter = productName.split("\\(");
-            /*
-            COMPLETE THIS PART
-            */
+
             //To char Array
             char[] pN = productName.toCharArray();
             for(int i=0; i<productName.length(); i++)
@@ -108,13 +105,35 @@ public class MainActivity extends AppCompatActivity {
                 {
                     finalSearchString+=escapeChars.get(pN[i]);
                 }
+                else if(pN[i]=='(')
+                {
+                    i++;
+                    finalSearchString+='(';
+                    try {
+                        while (pN[i] != ')') {
+                            if (pN[i] == ' ') {
+                                finalSearchString += '+';
+                            } else if (escapeChars.containsKey(pN[i])) {
+                                finalSearchString += escapeChars.get(pN[i]);
+                            } else {
+                                finalSearchString += pN[i];
+                            }
+                            i++;
+                        }
+                        finalSearchString+=')';
+                    }
+                    catch (Exception e)
+                    {
+                        Toast.makeText(this, "Missing closing parenthesis \')\'", Toast.LENGTH_LONG).show();
+                    }
+                }
                 else
                 {
                     finalSearchString += pN[i];
                 }
             }
             String urlToFetch = "https://www.amazon.in/s?url=search-alias%3Daps&field-keywords=" + finalSearchString;
-            Toast.makeText(this, urlToFetch, Toast.LENGTH_LONG).show();
+            //Toast.makeText(this, urlToFetch, Toast.LENGTH_LONG).show();
             System.out.println(urlToFetch);
             new SearchProduct().execute(urlToFetch);
         }
@@ -145,10 +164,24 @@ public class MainActivity extends AppCompatActivity {
 
                 String lala = buffer.toString();
                 Document document = Jsoup.parse(lala);
-
-                Element ele = document.select("span.a-size-base.a-color-price.a-text-bold").first();
+                int i=0;
+                Elements eles = document.select("div[class$=\"a-row\"]");
+                while(Jsoup.parse(eles.get(i).html()).getElementsByTag("span").first()==null)
+                {
+                    i++;
+                }
                 System.out.println(document.toString());
-                return ele.html();
+
+                String urlOfProduct = "https://www.amazon.in";
+                Element eless = document.getElementsByClass("sx-table-item").first();
+                if(eless!=null) {
+                    Element ele = eless.getElementsByTag("a").first();
+                    if(ele!=null)
+                        urlOfProduct = "https://www.amazon.in" + ele.attr("href");
+                }
+
+                //System.out.println(eles.html());
+                return Jsoup.parse(eles.get(i).html()).getElementsByTag("span").first().text()+"\n"+document.getElementsByClass("sx-title").first().text()+"splitMeNigga"+urlOfProduct;
                 /*
                 try {
                     Element eles = document.getElementsByClass("sx-table-item").first();
@@ -192,12 +225,26 @@ public class MainActivity extends AppCompatActivity {
             {
                 bt.setEnabled(true);
                 bt.setText("Start Tracking");
-                tv.setText(s);
+                String[] s1 = s.split("splitMeNigga");
+                tv.setText(tv.getText()+"\n\n"+s1[0]);
+                Toast.makeText(MainActivity.this, s1[1], Toast.LENGTH_LONG).show();
+                latestURL = s1[1];
             }
             else {
+                bt.setEnabled(true);
+                bt.setText("Start Tracking");
+                tv.setText(s);
                 new FetchProductPrice().execute(s);
             }
         }
+    }
+
+    public void redirectMe(View view)
+    {
+        Intent httpIntent = new Intent(Intent.ACTION_VIEW);
+        httpIntent.setData(Uri.parse(latestURL));
+
+        startActivity(httpIntent);
     }
 
     public class FetchProductPrice extends AsyncTask<String, String, String>
