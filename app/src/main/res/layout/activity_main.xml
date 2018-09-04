@@ -6,27 +6,30 @@
     android:layout_height="match_parent"
     tools:context="straightforwardapps.tellmewhenitchange.MainActivity">
 
-    <RelativeLayout
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="60dp"
+        android:layout_height="65dp"
         android:id="@+id/operationLayout"
         >
         <EditText
-            android:layout_width="320dp"
+            android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_alignParentTop="true"
             android:hint="For eg : Microsoft Xbox 360 4GB Console"
             android:id="@+id/prodName"
+            android:layout_weight="0.8"
             />
         <Button
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_toRightOf="@id/prodName"
             android:text="Start Tracking"
-            android:textSize="8dp"
+            android:textSize="10dp"
             android:id="@+id/fetchButton"
-            android:onClick="ExecuteFetch"/>
-    </RelativeLayout>
+            android:onClick="ExecuteFetch"
+            android:layout_weight="0.2"/>
+    </LinearLayout>
+    <!--
     <TextView
         android:id="@+id/tv"
         android:layout_width="wrap_content"
@@ -36,5 +39,14 @@
         android:textSize="20dp"
         android:onClick="redirectMe"
         />
+        -->
+    <!-- A RecyclerView with some commonly used attributes -->
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/recycler_view"
+        android:scrollbars="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/operationLayout"/>
+
 
 </RelativeLayout>

@@ -5,9 +5,16 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.DefaultItemAnimator;
+import android.support.v7.widget.GridLayoutManager;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
+import android.view.MotionEvent;
 import android.view.View;
+import android.widget.Adapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -26,22 +33,38 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
 
-    TextView tv;
+//    TextView tv;
     Button bt;
     EditText prodName;
     String latestURL = "";
+
+    private List<graphPractice> itemList = new ArrayList<>();
+    private RecyclerView recyclerView;
+    private AdapterClass mAdapter;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        tv = (TextView) findViewById(R.id.tv);
+//        tv = (TextView) findViewById(R.id.tv);
         bt = (Button) findViewById(R.id.fetchButton);
         prodName = (EditText) findViewById(R.id.prodName);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        recyclerView = (RecyclerView) findViewById(R.id.recycler_view);
+
+        mAdapter = new AdapterClass(itemList);
+        RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(getApplicationContext());
+        recyclerView.setLayoutManager(new GridLayoutManager(this, 2));
+        recyclerView.setItemAnimator(new DefaultItemAnimator());
+        recyclerView.setAdapter(mAdapter);
+
     }
 
     public void ExecuteFetch(View view)
@@ -165,23 +188,31 @@ public class MainActivity extends AppCompatActivity {
                 String lala = buffer.toString();
                 Document document = Jsoup.parse(lala);
                 int i=0;
-                Elements eles = document.select("div[class$=\"a-row\"]");
-                while(Jsoup.parse(eles.get(i).html()).getElementsByTag("span").first()==null)
-                {
-                    i++;
-                }
-                System.out.println(document.toString());
 
-                String urlOfProduct = "https://www.amazon.in";
-                Element eless = document.getElementsByClass("sx-table-item").first();
-                if(eless!=null) {
-                    Element ele = eless.getElementsByTag("a").first();
-                    if(ele!=null)
-                        urlOfProduct = "https://www.amazon.in" + ele.attr("href");
-                }
+                try {
+                    Elements eles = document.select("div[class$=\"a-row\"]");
+                    while (Jsoup.parse(eles.get(i).html()).getElementsByTag("span").first() == null) {
+                        i++;
+                    }
+                    System.out.println(document.toString());
 
-                //System.out.println(eles.html());
-                return Jsoup.parse(eles.get(i).html()).getElementsByTag("span").first().text()+"\n"+document.getElementsByClass("sx-title").first().text()+"splitMeNigga"+urlOfProduct;
+                    String urlOfProduct = "https://www.amazon.in";
+                    Element eless = document.getElementsByClass("sx-table-item").first();
+                    if (eless != null) {
+                        Element ele = eless.getElementsByTag("a").first();
+                        if (ele != null)
+                            urlOfProduct = "https://www.amazon.in" + ele.attr("href");
+                    }
+                    String price = Jsoup.parse(eles.get(i).html()).getElementsByTag("span").first().text();
+                    if (price.contains("from") || price.contains("FROM")) {
+                        price += " " + Jsoup.parse(eles.get(i).html()).getElementsByTag("span").get(2).text();
+                    }
+                    //System.out.println(eles.html());
+                    return price + "\n" + document.getElementsByClass("sx-title").first().text() + "splitMeNigga" + urlOfProduct;
+                }
+                catch(Exception e){
+                    System.out.println(e.getStackTrace());
+                }
                 /*
                 try {
                     Element eles = document.getElementsByClass("sx-table-item").first();
@@ -217,24 +248,28 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(String s) {
-            tv = (TextView) findViewById(R.id.tv);
+//            tv = (TextView) findViewById(R.id.tv);
             super.onPostExecute(s);
             System.out.println(s);
             int klmnop=1;
-            if(klmnop==1)
+            if(s!="FETCH ERROR")
             {
                 bt.setEnabled(true);
                 bt.setText("Start Tracking");
                 String[] s1 = s.split("splitMeNigga");
-                tv.setText(tv.getText()+"\n\n"+s1[0]);
-                Toast.makeText(MainActivity.this, s1[1], Toast.LENGTH_LONG).show();
-                latestURL = s1[1];
+                //tv.setText(tv.getText()+"\n\n"+s1[0]);
+                //Toast.makeText(MainActivity.this, s1[1], Toast.LENGTH_LONG).show();
+                //latestURL = s1[1];
+
+                prepareData(s1[0]);
             }
             else {
                 bt.setEnabled(true);
                 bt.setText("Start Tracking");
-                tv.setText(s);
-                new FetchProductPrice().execute(s);
+                Toast.makeText(MainActivity.this, "No such thing as "+prodName.getText(), Toast.LENGTH_LONG).show();
+                prodName.setText("");
+//                tv.setText(s);
+                //new FetchProductPrice().execute(s);
             }
         }
     }
@@ -247,65 +282,39 @@ public class MainActivity extends AppCompatActivity {
         startActivity(httpIntent);
     }
 
-    public class FetchProductPrice extends AsyncTask<String, String, String>
+    public void prepareData(String s)
     {
-
-        @Override
-        protected String doInBackground(String... urls) {
-            HttpURLConnection y = null;
-            BufferedReader reader = null;
-            try {
-                URL urlOfPage = new URL(urls[0]);
-
-                y = (HttpURLConnection) urlOfPage.openConnection();
-                y.connect();
-
-                InputStream stream = y.getInputStream();
-                reader = new BufferedReader(new InputStreamReader(stream));
-
-                String line = "";
-                StringBuffer buffer = new StringBuffer( );
-                while((line=reader.readLine())!=null)
-                {
-                    buffer.append(line);
-                }
-
-                String lala = buffer.toString();
-                Document document = Jsoup.parse(lala);
-
-                Element eles = document.getElementsByClass("p13n-sc-price").first();
-                return eles.text();
-            }
-
-            //EXCEPTION HANDLING STARTS
-            catch (MalformedURLException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }finally {
-                if(y!=null){
-                    y.disconnect();}
-                try {
-                    if(reader!=null){
-                        reader.close();}
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-            //EXCEPTION HANDLING ENDS
-
-            //return NULL or a Message Error
-            return "FETCH ERROR";
-        }
-
-        @Override
-        protected void onPostExecute(String s) {
-            tv = (TextView) findViewById(R.id.tv);
-            super.onPostExecute(s);
-            System.out.println(s);
-            tv.setText(s);
-            bt.setText("Start Fetching");
-            bt.setEnabled(true);
-        }
+        String[] ss = s.split("\n");
+        itemList.add(new graphPractice(ss[0], ss[1]));
+        mAdapter.notifyDataSetChanged();
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 }
