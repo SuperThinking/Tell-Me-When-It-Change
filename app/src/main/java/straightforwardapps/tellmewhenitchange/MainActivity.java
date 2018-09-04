@@ -1,5 +1,6 @@
 package straightforwardapps.tellmewhenitchange;
 
+import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -9,18 +10,14 @@ import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.view.MotionEvent;
 import android.view.View;
-import android.widget.Adapter;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ScrollView;
-import android.widget.TextView;
 import android.widget.Toast;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import com.bumptech.glide.load.engine.Resource;
+
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -198,10 +195,15 @@ public class MainActivity extends AppCompatActivity {
 
                     String urlOfProduct = "https://www.amazon.in";
                     Element eless = document.getElementsByClass("sx-table-item").first();
-                    if (eless != null) {
-                        Element ele = eless.getElementsByTag("a").first();
-                        if (ele != null)
-                            urlOfProduct = "https://www.amazon.in" + ele.attr("href");
+                    Element eless1 = document.select("a.a-spacing-none.a-link-normal.sx-grid-link").first();
+                    if (eless != null && eless.getElementsByTag("a").first()!=null) {
+                            urlOfProduct = "https://www.amazon.in" + eless.getElementsByTag("a").first().attr("href");
+                    }
+                    else if(eless1!=null){
+                        urlOfProduct = "https://www.amazon.in" + eless1.attr("href");
+                    }
+                    else{
+                        System.out.println("Nulla");
                     }
                     String price = Jsoup.parse(eles.get(i).html()).getElementsByTag("span").first().text();
                     if (price.contains("from") || price.contains("FROM")) {
@@ -261,7 +263,7 @@ public class MainActivity extends AppCompatActivity {
                 //Toast.makeText(MainActivity.this, s1[1], Toast.LENGTH_LONG).show();
                 //latestURL = s1[1];
 
-                prepareData(s1[0]);
+                prepareData(s1[0], s1[1]);
             }
             else {
                 bt.setEnabled(true);
@@ -282,10 +284,10 @@ public class MainActivity extends AppCompatActivity {
         startActivity(httpIntent);
     }
 
-    public void prepareData(String s)
+    public void prepareData(String s, String s1)
     {
         String[] ss = s.split("\n");
-        itemList.add(new graphPractice(ss[0], ss[1]));
+        itemList.add(new graphPractice(ss[0], ss[1], s1));
         mAdapter.notifyDataSetChanged();
     }
 

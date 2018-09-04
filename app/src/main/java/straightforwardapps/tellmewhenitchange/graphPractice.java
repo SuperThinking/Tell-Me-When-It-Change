@@ -1,7 +1,9 @@
 package straightforwardapps.tellmewhenitchange;
 
+import android.content.Context;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.widget.Toast;
 
 import com.jjoe64.graphview.GraphView;
 import com.jjoe64.graphview.series.DataPoint;
@@ -10,19 +12,19 @@ import com.jjoe64.graphview.series.LineGraphSeries;
 public class graphPractice{
     private String id;
     private String name;
+    private String amazonURL;
 
     public String getID()
     {
         return this.id;
     }
-    public String getName()
-    {
-        return this.name;
-    }
-    public graphPractice(String i, String j)
+    public String getName() {return this.name;}
+    public String getUrl() {return  this.amazonURL;}
+    public graphPractice(String i, String j, String k)
     {
         this.id = i;
         this.name = j;
+        this.amazonURL = k;
     }
 }
 /*
