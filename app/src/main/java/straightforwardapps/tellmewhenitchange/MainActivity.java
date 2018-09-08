@@ -24,6 +24,8 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -45,6 +47,7 @@ public class MainActivity extends AppCompatActivity {
     private List<graphPractice> itemList = new ArrayList<>();
     private RecyclerView recyclerView;
     private AdapterClass mAdapter;
+    String fileName = "priceList";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,6 +65,7 @@ public class MainActivity extends AppCompatActivity {
         recyclerView.setItemAnimator(new DefaultItemAnimator());
         recyclerView.setAdapter(mAdapter);
 
+        onStartApp();
     }
 
     public void ExecuteFetch(View view)
@@ -263,6 +267,8 @@ public class MainActivity extends AppCompatActivity {
                 //Toast.makeText(MainActivity.this, s1[1], Toast.LENGTH_LONG).show();
                 //latestURL = s1[1];
 
+                String[] ss = s1[0].split("\n");
+                writePrice(ss[0]+"vishalahsiv"+ss[1]+"vishalahsiv"+s1[1]);
                 prepareData(s1[0], s1[1]);
             }
             else {
@@ -291,32 +297,64 @@ public class MainActivity extends AppCompatActivity {
         mAdapter.notifyDataSetChanged();
     }
 
+    public void prepareData1(String s0, String s1, String s2)
+    {
+        itemList.add(new graphPractice(s0, s1, s2));
+        mAdapter.notifyDataSetChanged();
+    }
+
+    public void onStartApp()
+    {
+        System.out.println(getPrice());
+        if(getPrice()!=null)
+        {
+            String kk = getPrice().trim();
+            String[] a = kk.split("\n");
+            for(int i=0; i<a.length; i++)
+            {
+                String o = a[i];
+                String[] oo = o.split("vishalahsiv");
+                prepareData1(oo[0], oo[1], oo[2]);
+                //System.out.println("MY LENGTH"+oo.length+"\n"+oo[0]);
+            }
+        }
+    }
 
 
+    public void writePrice(String s)
+    {
+        String soap = (getPrice().trim()+"\n"+s);
+        System.out.println("BEFORE:\n"+soap);
+        try{
+            FileOutputStream fileOutputStream = openFileOutput(fileName, MODE_PRIVATE);
+            fileOutputStream.write(soap.getBytes());
+            fileOutputStream.close();
+            System.out.println("AFTER:\n"+getPrice());
+        }catch (Exception e)
+        {
+            e.printStackTrace();
+        }
+    }
 
 
+    public String getPrice() {
+        try {
+            FileInputStream fileInputStream = openFileInput(fileName);
+            StringBuffer fileContent = new StringBuffer("");
 
+            byte[] buffer = new byte[1024];
 
+            int n;
+            while ((n = fileInputStream.read(buffer)) != -1)
+            {
+                fileContent.append(new String(buffer, 0, n));
+            }
+            fileInputStream.close();
+            return fileContent.toString();
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return null;
+    }
 }
